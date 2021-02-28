@@ -1,0 +1,21 @@
+#!/usr/bin/env ruby
+
+require "fileutils"
+
+root_dir = File.expand_path("../..", __FILE__)
+snapshot_dir = File.join(root_dir, "current_snapshot")
+
+if File.exists?(snapshot_dir)
+  puts "The snapshot directory already exists: #{snapshot_dir}\n"
+  print "Do you want to delete it? (y/n) "
+  answer = gets.to_s.strip.downcase
+  exit unless answer.start_with?("y")
+  FileUtils.rm_rf(snapshot_dir)
+end
+
+system("git clone git@github.com:dirk/git-automation-test-suite-target.git current_snapshot")
+
+puts
+puts "The snapshot is now ready at: #{snapshot_dir}"
+puts
+puts "Once you have finished modifying it, run ./bin/save_snapshot"

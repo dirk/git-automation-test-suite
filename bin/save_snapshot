@@ -1,0 +1,66 @@
+#!/usr/bin/env ruby
+
+require "fileutils"
+require "json"
+require "optparse"
+
+require "bundler/setup"
+require "active_support/time_with_zone"
+
+root_dir = File.expand_path("../..", __FILE__)
+snapshot_dir = File.join(root_dir, "current_snapshot")
+
+unless File.exists?(snapshot_dir)
+  puts "Missing snapshot directory: #{snapshot_dir}\n"
+  exit
+end
+
+options = {}
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: bin/save_snapshot [options]"
+
+  opts.on("-n", "--name NAME", "Human-friendly name of the snapshot, eg. \"Fresh clone\"") do |name|
+    options[:name] = name
+  end
+  opts.on("-o", "--optional", "Save under the optional snapshots") do |optional|
+    options[:optional] = optional
+  end
+end
+parser.parse!
+
+name = options[:name].to_s.strip
+if name.empty?
+  puts "Missing a --name for the snapshot.\n\n"
+  puts parser.help
+  exit
+end
+
+# Convert the nice human name into snake_case.
+snake_cased_name = name.downcase.gsub(/\W/, '_').gsub(/_+/, '_')
+
+snapshots_name = options[:optional] ? "optional" : "required"
+
+save_dir = File.join(root_dir, "snapshots", snapshots_name, snake_cased_name)
+
+if File.exists?(save_dir)
+  puts "The snapshot directory already exists: #{save_dir}\n"
+  print "Do you want to delete it and save the current snapshot in its place? (y/n) "
+  answer = gets.to_s.strip.downcase
+  exit unless answer.start_with?("y")
+  FileUtils.rm_rf(save_dir)
+end
+FileUtils.mkdir(save_dir)
+
+snapshot_path = File.join(save_dir, "snapshot.tar.gz")
+system("tar czvf #{snapshot_path} -C #{snapshot_dir} .")
+
+manifest_path = File.join(save_dir, "manifest.json")
+File.open(manifest_path, "w") do |file|
+  file.write(JSON.pretty_generate({
+    name: name,
+    created_at: Time.now.iso8601,
+  }) + "\n")
+end
+
+puts
+puts "Snapshot and manifest saved to: #{save_dir}"

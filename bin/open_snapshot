@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+
+require "fileutils"
+
+if ARGV.empty?
+  puts "Usage: bin/open_snapshot PATH_TO_SNAPSHOT"
+  exit
+end
+
+snapshot_file = ARGV.shift
+
+root_dir = File.expand_path("../..", __FILE__)
+snapshot_dir = File.join(root_dir, "current_snapshot")
+
+if File.exists?(snapshot_dir)
+  puts "The snapshot directory already exists: #{snapshot_dir}\n"
+  print "Do you want to delete it? (y/n) "
+  answer = gets.to_s.strip.downcase
+  exit unless answer.start_with?("y")
+  FileUtils.rm_rf(snapshot_dir)
+end
+FileUtils.mkdir(snapshot_dir)
+
+puts "Opening #{snapshot_file} ..."
+system("tar xzvf #{snapshot_file} -C #{snapshot_dir} 2>&1")
+
+puts
+puts "Snapshot opened to: #{snapshot_dir}"
