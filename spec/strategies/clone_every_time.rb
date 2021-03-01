@@ -1,14 +1,19 @@
 require_relative "./strategy"
 
-Strategy.add 'Clone every time',
-  checkout: ->(runner, ref) {
-    Dir.chdir(File.dirname(runner.dir)) do
-      runner.system("rm -rf #{runner.dir}")
-      runner.system("git clone #{runner.remote} #{runner.dir}")
+class Strategy::CloneEveryTime < Strategy
+  def checkout(ref)
+    Dir.chdir(File.dirname(repo_dir)) do
+      system("rm -rf #{repo_dir}")
+      system("git clone #{remote_url} #{repo_dir}")
     end
-    runner.system("git fetch -- origin #{ref}")
-    runner.system("git checkout -f FETCH_HEAD")
-    expect(runner.last_output)
-      .to include("You are in 'detached HEAD' state.")
-      .or include("HEAD is now at")
-  }
+    system("git fetch -- origin #{ref}")
+    system("git checkout -f FETCH_HEAD")
+    expectations do |strategy|
+      expect(strategy.last_output)
+        .to include("You are in 'detached HEAD' state.")
+        .or include("HEAD is now at")
+    end
+  end
+end
+
+Strategy.add(Strategy::CloneEveryTime)

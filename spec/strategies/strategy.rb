@@ -1,37 +1,25 @@
 class Strategy
+  attr_reader :repo_dir, :remote_url, :spec
+
+  attr_reader :last_output
+
+  def initialize(repo_dir, remote_url, spec)
+    @repo_dir = repo_dir
+    @remote_url = remote_url
+    @spec = spec
+  end
+
   class << self
     attr_accessor :strategies
     Strategy.strategies = []
 
-    def add(name, checkout:)
-      self.new(name, checkout: checkout)
-        .tap { |strategy| Strategy.strategies << strategy }
+    def add(klass)
+      self.strategies << klass
     end
-  end
 
-  attr_reader :name
-
-  def initialize(name, checkout:)
-    @name = name
-    @checkout_script = checkout
-  end
-
-  def checkout(ref, dir, remote, spec)
-    Strategy::Runner.new(dir, remote)
-      .run(@checkout_script, ref, spec)
-  end
-end
-
-class Strategy::Runner
-  attr_reader :dir, :remote, :last_output
-
-  def initialize(dir, remote)
-    @dir = dir
-    @remote = remote
-  end
-
-  def run(script, ref, spec)
-    spec.instance_exec(self, ref, &script)
+    def short_name
+      name.split("::").last
+    end
   end
 
   def system(cmd)
@@ -50,6 +38,10 @@ class Strategy::Runner
       puts output
     end
     output
+  end
+
+  def expectations(&block)
+    spec.instance_exec(self, &block)
   end
 end
 

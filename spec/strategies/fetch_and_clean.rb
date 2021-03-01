@@ -1,12 +1,17 @@
 require_relative "./strategy"
 
-Strategy.add 'Fetch and clean',
-  checkout: ->(runner, ref) {
-    runner.system("git clean -ffxdq")
-    runner.system("git fetch -- origin #{ref}")
-    runner.system("git checkout -f FETCH_HEAD")
-    expect(runner.last_output)
-      .to include("You are in 'detached HEAD' state.")
-      .or include("HEAD is now at")
-    runner.system("git clean -ffxdq")
-  }
+class Strategy::FetchAndClean < Strategy
+  def checkout(ref)
+    system("git clean -ffxdq")
+    system("git fetch -- origin #{ref}")
+    system("git checkout -f FETCH_HEAD")
+    expectations do |strategy|
+      expect(strategy.last_output)
+        .to include("You are in 'detached HEAD' state.")
+        .or include("HEAD is now at")
+    end
+    system("git clean -ffxdq")
+  end
+end
+
+Strategy.add(Strategy::FetchAndClean)
