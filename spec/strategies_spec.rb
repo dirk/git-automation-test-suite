@@ -7,8 +7,9 @@ require_relative "./helpers/git_expectations"
 require_relative "./snapshot"
 
 # Add a require of each strategy in the strategies/ directory here.
+require_relative "./strategies/clean_and_checkout_and_hard_reset"
+require_relative "./strategies/clean_and_checkout_fetch_head"
 require_relative "./strategies/clone_every_time"
-require_relative "./strategies/fetch_and_clean"
 
 root_dir = File.expand_path("../..", __FILE__)
 snapshot_dir = File.join(root_dir, "tmp", "snapshot")
@@ -43,7 +44,7 @@ RSpec.describe('Strategies') do
 
           it("checks out first commit by SHA-1") do
             unpack.call do |strategy|
-              strategy.checkout("2a2b705bd7703fdd0e9574f1707070ff71f4fdf4")
+              strategy.checkout("2a2b705bd7703fdd0e9574f1707070ff71f4fdf4", branch: false)
               expect("present-on-first-commit.txt").to exist
               expect("present-on-second-commit.txt").to_not exist
               expect(git_ls_files).to eq %w[

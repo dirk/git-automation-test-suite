@@ -22,6 +22,11 @@ class Strategy
     end
   end
 
+  # Abstract method, should be implemented by each strategy subclass.
+  def checkout(ref, branch: true)
+    raise
+  end
+
   def system(cmd)
     unless cmd.include?(">")
       cmd += " 2>&1"
